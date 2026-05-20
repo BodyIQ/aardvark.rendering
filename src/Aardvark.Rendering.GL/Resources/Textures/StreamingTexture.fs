@@ -340,9 +340,6 @@ type StreamingTexture(ctx : Context, mipMap : bool) =
     let mutable mipMapLevels = 0
     let mutable bufferSize = 0n
 
-    let watch = System.Diagnostics.Stopwatch()
-    let mutable iter = 0
-
     let upload (f : PixFormat) (size : V2i) (data : nativeint) =
         use __ = ctx.ResourceLock
 
@@ -476,14 +473,6 @@ type StreamingTexture(ctx : Context, mipMap : bool) =
     override x.Compute(token) =
         use t = ctx.ResourceLock
 
-        if iter = 60 then
-            Log.warn "took: %A" (watch.MicroTime / iter)
-            iter <- 0
-            watch.Reset()
-
-        watch.Start()
-        iter <- iter + 1
-
         lock swapLock (fun () ->
             let pbo = pong
 
@@ -519,9 +508,6 @@ type StreamingTexture(ctx : Context, mipMap : bool) =
 
             GL.Sync()
         )
-
-        
-        watch.Stop()
 
         texture :> ITexture
 

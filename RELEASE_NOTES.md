@@ -1,6 +1,7 @@
 - [GL] Added `Context.GetDebugMessages`
 - [GL] Added `Context.OnDispose`
-- [GL] Represent `NullTexture` with a proper texture object instead of a texture with handle 0.
+- [GL] Represent `NullTexture` with a proper texture object instead of a texture with handle 0
+- [GL] Removed warnings produced by `StreamingTexture`
 
 ### 5.6.5
 - Fixed support for 64-bit attributes and uniforms
