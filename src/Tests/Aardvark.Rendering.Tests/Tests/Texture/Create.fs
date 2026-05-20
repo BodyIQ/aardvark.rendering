@@ -26,6 +26,7 @@ module TextureCreate =
             Expect.throwsT<ArgumentException> (create size.XYI TextureDimension.Texture2D -1  2) "Expected ArgumentException"
             Expect.throwsT<ArgumentException> (create size.XYI TextureDimension.Texture2D  2 -4) "Expected ArgumentException"
             Expect.throwsT<ArgumentException> (create (size.XYI * -1) TextureDimension.Texture2D  1  1) "Expected ArgumentException"
+            Expect.throwsT<ArgumentException> (create (V3i(0, 1, 1)) TextureDimension.Texture2D  1  1) "Expected ArgumentException"
 
             Expect.throwsT<ArgumentException> (createArray size.XYI TextureDimension.Texture2D  3  0  1) "Expected ArgumentException"
             Expect.throwsT<ArgumentException> (createArray size.XYI TextureDimension.Texture2D  3 -3  1) "Expected ArgumentException"
@@ -34,6 +35,7 @@ module TextureCreate =
             Expect.throwsT<ArgumentException> (createArray size.XYI TextureDimension.Texture2D  0  1  1) "Expected ArgumentException"
             Expect.throwsT<ArgumentException> (createArray size.XYI TextureDimension.Texture2D -4  1  1) "Expected ArgumentException"
             Expect.throwsT<ArgumentException> (createArray (size.XYI * -1) TextureDimension.Texture2D 1  1  2) "Expected ArgumentException"
+            Expect.throwsT<ArgumentException> (createArray (V3i(1, 0, 1)) TextureDimension.Texture2D 1  1  2) "Expected ArgumentException"
 
 
         let invalidUsage (runtime : IRuntime) =

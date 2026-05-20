@@ -74,10 +74,10 @@ module ResourceValidation =
             getSizeAux Unchecked.defaultof<Helpers.TextureOrRenderbuffer> level texture
 
         let private isValidSize (size : V3i) = function
-            | TextureDimension.Texture1D -> size.X >= 0 && size.YZ = V2i.II
-            | TextureDimension.Texture2D -> Vec.allGreaterOrEqual size.XY 0 && size.Z = 1
-            | TextureDimension.Texture3D -> Vec.allGreaterOrEqual size 0
-            | TextureDimension.TextureCube -> size.X >= 0 && size.X = size.Y && size.Z = 1
+            | TextureDimension.Texture1D -> size.X > 0 && size.YZ = V2i.II
+            | TextureDimension.Texture2D -> Vec.allGreater size.XY 0 && size.Z = 1
+            | TextureDimension.Texture3D -> Vec.allGreater size 0
+            | TextureDimension.TextureCube -> size.X > 0 && size.X = size.Y && size.Z = 1
             | _ -> true
 
         let private validSampleCounts = Set.ofList [ 1; 2; 4; 8; 16; 32; 64 ]
@@ -228,7 +228,7 @@ module ResourceValidation =
                 | TextureDimension.Texture1D -> failf "size %A is invalid (must be V3i(w, 1, 1) with w > 0)" size
                 | TextureDimension.Texture2D -> failf "size %A is invalid (must be V3i(w, h, 1) with w, h > 0)" size
                 | TextureDimension.Texture3D -> failf "size %A is invalid (must be V3i(w, h, d) with w, h, d > 0)" size
-                | _ ->                          failf "size %A is invalid (must be V3i(w, w, 1) with w > 0)" size
+                | _ ->                          failf "size %A is invalid (must be V3i(s, s, 1) with s > 0)" size
 
             if levels < 1 then failf "levels must be greater than 0 (is %d)" levels
             if samples < 1 then failf "samples must be greater than 0 (is %d)" samples
