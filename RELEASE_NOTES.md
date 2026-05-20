@@ -1,3 +1,4 @@
+### 5.6.6
 - [GL] Added `Context.GetDebugMessages`
 - [GL] Added `Context.OnDispose`
 - [GL] Represent `NullTexture` with a proper texture object instead of a texture with handle 0
