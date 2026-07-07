@@ -1,3 +1,5 @@
+- [Application.WinForms] Prevent PreviewKeyDown from sending KeyDown events for arrow keys
+
 ### 5.6.6
 - [GL] Added `Context.GetDebugMessages`
 - [GL] Added `Context.OnDispose`

@@ -24,14 +24,8 @@ type Keyboard() as this =
             e.SuppressKeyPress <- true
 
     let onPreviewKeyDown (s : obj) (e : PreviewKeyDownEventArgs) =
-        match e.KeyCode with
-            | WKeys.Left | WKeys.Right | WKeys.Up | WKeys.Down ->
-                this.KeyDown (%e.KeyCode)
-            | _ -> ()
-
         if this.ClaimsKeyEvents then
             e.IsInputKey <- true
-            
 
     let onKeyUp (s : obj) (e : KeyEventArgs) =
         this.KeyUp (%e.KeyCode)
