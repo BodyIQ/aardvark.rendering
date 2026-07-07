@@ -1,3 +1,4 @@
+### 5.6.7
 - [Application.WinForms] Prevent PreviewKeyDown from sending KeyDown events for arrow keys
 
 ### 5.6.6
