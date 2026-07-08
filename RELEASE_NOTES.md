@@ -1,4 +1,5 @@
-- [Application] Add support for up to 8 mouse buttons
+- [Application] Added support for up to 8 mouse buttons
+- [Application] Prevent consecutive double-click events from `EventMouse` to align behavior with Windows Forms.
 
 ### 5.6.7
 - [Application.WinForms] Prevent PreviewKeyDown from sending KeyDown events for arrow keys
