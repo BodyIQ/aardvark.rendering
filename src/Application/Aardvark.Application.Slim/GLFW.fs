@@ -223,9 +223,14 @@ module Translations =
 
     let toMouseButton (b : MouseButton) =
         match b with
-        | MouseButton.Left -> Aardvark.Application.MouseButtons.Left
-        | MouseButton.Right -> Aardvark.Application.MouseButtons.Right
-        | MouseButton.Middle -> Aardvark.Application.MouseButtons.Middle
+        | MouseButton.Left    -> Aardvark.Application.MouseButtons.Left
+        | MouseButton.Right   -> Aardvark.Application.MouseButtons.Right
+        | MouseButton.Middle  -> Aardvark.Application.MouseButtons.Middle
+        | MouseButton.Button4 -> Aardvark.Application.MouseButtons.Button4
+        | MouseButton.Button5 -> Aardvark.Application.MouseButtons.Button5
+        | MouseButton.Button6 -> Aardvark.Application.MouseButtons.Button6
+        | MouseButton.Button7 -> Aardvark.Application.MouseButtons.Button7
+        | MouseButton.Button8 -> Aardvark.Application.MouseButtons.Button8
         | _ -> Aardvark.Application.MouseButtons.None
 
 [<AutoOpen>]

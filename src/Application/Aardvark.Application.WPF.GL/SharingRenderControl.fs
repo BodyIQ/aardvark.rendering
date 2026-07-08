@@ -589,9 +589,11 @@ type OpenGlSharingRenderControl(runtime : Runtime, samples : int) as this =
 
         let button (b : Input.MouseButton) =
             match b with
-                | Input.MouseButton.Left -> MouseButtons.Left
-                | Input.MouseButton.Middle -> MouseButtons.Middle
-                | Input.MouseButton.Right -> MouseButtons.Right
+                | Input.MouseButton.Left     -> MouseButtons.Left
+                | Input.MouseButton.Middle   -> MouseButtons.Middle
+                | Input.MouseButton.Right    -> MouseButtons.Right
+                | Input.MouseButton.XButton1 -> MouseButtons.Button4
+                | Input.MouseButton.XButton2 -> MouseButtons.Button5
                 | _ -> MouseButtons.None
 
         let mousePos() =
