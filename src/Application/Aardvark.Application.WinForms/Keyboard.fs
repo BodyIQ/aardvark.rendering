@@ -3,7 +3,6 @@
 open System
 open System.Windows.Forms
 open Aardvark.Application
-open Aardvark.Base
 
 type private WKeys = System.Windows.Forms.Keys
 
@@ -15,27 +14,27 @@ type Keyboard() as this =
     let (~%) (k : System.Windows.Forms.Keys) : Keys =
         KeyConverter.keyFromVirtualKey(int k)
 
-
-    let onKeyDown (s : obj) (e : KeyEventArgs) =
+    let onKeyDown (_ : obj) (e : KeyEventArgs) =
         this.KeyDown (%e.KeyCode)
         e.Handled <- true
         if e.Alt || e.Control then 
             e.Handled <- true
             e.SuppressKeyPress <- true
 
-    let onPreviewKeyDown (s : obj) (e : PreviewKeyDownEventArgs) =
+    let onPreviewKeyDown (_ : obj) (e : PreviewKeyDownEventArgs) =
         if this.ClaimsKeyEvents then
             e.IsInputKey <- true
 
-    let onKeyUp (s : obj) (e : KeyEventArgs) =
+    let onKeyUp (_ : obj) (e : KeyEventArgs) =
         this.KeyUp (%e.KeyCode)
         e.Handled <- true
 
-    let onKeyPress (s : obj) (e : KeyPressEventArgs) =
+    let onKeyPress (_ : obj) (e : KeyPressEventArgs) =
         this.KeyPress e.KeyChar
         e.Handled <- true
 
 
+    let onLostFocusHandler = EventHandler(fun _ _ -> this.Reset())
     let onKeyDownHandler = KeyEventHandler(onKeyDown)
     let onPreviewKeyDownHandler = PreviewKeyDownEventHandler(onPreviewKeyDown)
     let onKeyUpHandler = KeyEventHandler(onKeyUp)
@@ -43,21 +42,23 @@ type Keyboard() as this =
 
     let addHandlers() =
         match ctrl with
-            | Some ctrl -> 
-               ctrl.PreviewKeyDown.AddHandler onPreviewKeyDownHandler
-               ctrl.KeyDown.AddHandler onKeyDownHandler
-               ctrl.KeyUp.AddHandler onKeyUpHandler
-               ctrl.KeyPress.AddHandler onKeyPressHandler
-            | _ -> ()
+        | Some ctrl ->
+           ctrl.LostFocus.AddHandler onLostFocusHandler
+           ctrl.PreviewKeyDown.AddHandler onPreviewKeyDownHandler
+           ctrl.KeyDown.AddHandler onKeyDownHandler
+           ctrl.KeyUp.AddHandler onKeyUpHandler
+           ctrl.KeyPress.AddHandler onKeyPressHandler
+        | _ -> ()
 
     let removeHandlers() =
         match ctrl with
-            | Some ctrl ->
-                ctrl.PreviewKeyDown.RemoveHandler onPreviewKeyDownHandler
-                ctrl.KeyDown.RemoveHandler onKeyDownHandler
-                ctrl.KeyUp.RemoveHandler onKeyUpHandler
-                ctrl.KeyPress.RemoveHandler onKeyPressHandler
-            | _ -> ()
+        | Some ctrl ->
+            ctrl.LostFocus.RemoveHandler onLostFocusHandler
+            ctrl.PreviewKeyDown.RemoveHandler onPreviewKeyDownHandler
+            ctrl.KeyDown.RemoveHandler onKeyDownHandler
+            ctrl.KeyUp.RemoveHandler onKeyUpHandler
+            ctrl.KeyPress.RemoveHandler onKeyPressHandler
+        | _ -> ()
 
     member x.SetControl c =
         removeHandlers()

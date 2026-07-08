@@ -61,8 +61,8 @@ type internal MouseClickState() =
         )
 
 type EventMouse(autoGenerateClickEvents : bool) =
+    let buttons = AVal.init MouseButtons.None
     let position = AVal.init <| PixelPosition()
-    let buttons = ConcurrentDictionary<MouseButtons, cval<bool>>()
     let scroll = cval 0.0
     let inside = cval false
 
@@ -75,13 +75,6 @@ type EventMouse(autoGenerateClickEvents : bool) =
     let leaveEvent = EventSource<PixelPosition>()
     let moveEvent = EventSource<PixelPosition * PixelPosition>()
 
-    let setPos (p : PixelPosition) =
-        if p <> position.GetValue() then
-            position.Value <- p
-
-    let getDown button =
-        buttons.GetOrAdd(button, fun b -> AVal.init false)
-
     let getClickState =
         if autoGenerateClickEvents then
             let store = ConcurrentDictionary<MouseButtons, MouseClickState>()
@@ -89,22 +82,11 @@ type EventMouse(autoGenerateClickEvents : bool) =
         else
             Unchecked.defaultof<_>
 
-    let handleDown (pos : PixelPosition) (b : MouseButtons) =
-        if autoGenerateClickEvents then
-            let state = getClickState b
-            state.Down pos
+    static let getLowestButton (buttons: MouseButtons) =
+        buttons &&& (~~~buttons + enum 1)
 
-        downEvent.Emit b
-
-    let handleUp (pos : PixelPosition) (b : MouseButtons) =
-        if autoGenerateClickEvents then
-            let state = getClickState b
-            match state.Up pos with
-            | 1 -> clickEvent.Emit b
-            | 2 -> doubleClickEvent.Emit b
-            | _ -> ()
-
-        upEvent.Emit b
+    static let unsetLowestButton (buttons: MouseButtons) =
+        buttons &&& (buttons - enum 1)
 
     abstract member Down : PixelPosition * MouseButtons -> unit
     abstract member Up : PixelPosition * MouseButtons -> unit
@@ -114,43 +96,79 @@ type EventMouse(autoGenerateClickEvents : bool) =
     abstract member Enter : PixelPosition -> unit
     abstract member Leave : PixelPosition -> unit
     abstract member Move : PixelPosition -> unit
+    abstract member Reset : unit -> unit
 
-    default x.Down(pos : PixelPosition, b : MouseButtons) =
-        let m = getDown b
-        transact (fun () -> m.Value <- true; setPos pos)
-        handleDown pos b
+    default x.Down(pos : PixelPosition, btns : MouseButtons) =
+        let b = getLowestButton btns
 
-    default x.Up(pos : PixelPosition, b : MouseButtons) =
-        let m = getDown b
-        transact (fun () -> m.Value <- false; setPos pos)
-        handleUp pos b
+        if b <> MouseButtons.None then
+            if not <| buttons.Value.HasFlag b then
+                if autoGenerateClickEvents then
+                    let state = getClickState b
+                    state.Down pos
+
+                transact (fun () ->
+                    position.Value <- pos
+                    buttons.Value <- buttons.Value ||| b
+                )
+
+                downEvent.Emit b
+
+            let btns = unsetLowestButton btns
+            if btns <> MouseButtons.None then x.Down(pos, btns)
+
+    default x.Up(pos : PixelPosition, btns : MouseButtons) =
+        let b = getLowestButton btns
+
+        if b <> MouseButtons.None then
+            if buttons.Value.HasFlag b then
+                if autoGenerateClickEvents then
+                    let state = getClickState b
+                    match state.Up pos with
+                    | 1 -> clickEvent.Emit b
+                    | 2 -> doubleClickEvent.Emit b
+                    | _ -> ()
+
+                transact (fun () ->
+                    position.Value <- pos
+                    buttons.Value <- buttons.Value &&& ~~~b
+                )
+
+                upEvent.Emit b
+
+            let btns = unsetLowestButton btns
+            if btns <> MouseButtons.None then x.Up(pos, btns)
 
     default x.Click(pos : PixelPosition, b : MouseButtons) =
-        transact (fun () -> setPos pos)
+        transact (fun () -> position.Value <- pos)
         clickEvent.Emit b
 
     default x.DoubleClick(pos : PixelPosition, b : MouseButtons) =
-        transact (fun () -> setPos pos)
+        transact (fun () -> position.Value <- pos)
         doubleClickEvent.Emit b
 
     default x.Scroll(pos : PixelPosition, b : float) =
-        transact (fun () -> scroll.Value <- scroll.Value + b; setPos pos)
+        transact (fun () -> scroll.Value <- scroll.Value + b; position.Value <- pos)
         scrollEvent.Emit b
 
     default x.Enter(p : PixelPosition) =
-        transact (fun () -> inside.Value <- true; setPos p)
+        transact (fun () -> inside.Value <- true; position.Value <- p)
         enterEvent.Emit p
 
     default x.Leave(p : PixelPosition) =
-        transact (fun () -> inside.Value <- false; setPos p)
+        transact (fun () -> inside.Value <- false; position.Value <- p)
         leaveEvent.Emit p
 
     default x.Move(p : PixelPosition) =
         let last = position.GetValue()
-        transact (fun () -> setPos p)
+        transact (fun () -> position.Value <- p)
         moveEvent.Emit ((last, p))
 
-    member x.IsDown button = getDown button :> aval<_>
+    default x.Reset() =
+        x.Up(position.Value, buttons.Value)
+
+    member x.IsDown(button : MouseButtons) : aval<bool> =
+        buttons |> AVal.map (fun buttons -> buttons.HasFlag button)
 
     member x.Use(o : IMouse) =
         let pos = o.Position
@@ -168,7 +186,7 @@ type EventMouse(autoGenerateClickEvents : bool) =
             ]
 
         { new IDisposable with
-            member x.Dispose() = subscriptions |> List.iter (fun i -> i.Dispose()) 
+            member x.Dispose() = subscriptions |> List.iter _.Dispose()
         }
 
     interface IMouse with

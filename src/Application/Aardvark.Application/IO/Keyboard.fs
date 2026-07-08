@@ -3,8 +3,6 @@
 open Aardvark.Base
 open FSharp.Data.Adaptive
 open FSharp.Data.Adaptive.Operators
-open System.Runtime.CompilerServices
-open FSharp.Data.Adaptive
 open System.Collections.Concurrent
 
 type IKeyboard =
@@ -35,22 +33,22 @@ type EventKeyboard() =
     let input = EventSource<char>()
     let mutable claimEvents = true
 
-    let lAlt = lazy (isDown.GetOrAdd(Keys.LeftAlt, fun k -> AVal.init (downKeys.Contains k)))
-    let rAlt = lazy (isDown.GetOrAdd(Keys.RightAlt, fun k -> AVal.init (downKeys.Contains k)))
+    let lAlt = lazy isDown.GetOrAdd(Keys.LeftAlt, fun k -> AVal.init (downKeys.Contains k))
+    let rAlt = lazy isDown.GetOrAdd(Keys.RightAlt, fun k -> AVal.init (downKeys.Contains k))
     let alt = lazy (lAlt.Value %|| rAlt.Value)
-    
-    let lShift = lazy (isDown.GetOrAdd(Keys.LeftShift, fun k -> AVal.init (downKeys.Contains k)))
-    let rShift = lazy (isDown.GetOrAdd(Keys.RightShift, fun k -> AVal.init (downKeys.Contains k)))
+
+    let lShift = lazy isDown.GetOrAdd(Keys.LeftShift, fun k -> AVal.init (downKeys.Contains k))
+    let rShift = lazy isDown.GetOrAdd(Keys.RightShift, fun k -> AVal.init (downKeys.Contains k))
     let shift = lazy (lShift.Value %|| rShift.Value)
-    
-    let lCtrl = lazy (isDown.GetOrAdd(Keys.LeftCtrl, fun k -> AVal.init (downKeys.Contains k)))
-    let rCtrl = lazy (isDown.GetOrAdd(Keys.RightCtrl, fun k -> AVal.init (downKeys.Contains k)))
+
+    let lCtrl = lazy isDown.GetOrAdd(Keys.LeftCtrl, fun k -> AVal.init (downKeys.Contains k))
+    let rCtrl = lazy isDown.GetOrAdd(Keys.RightCtrl, fun k -> AVal.init (downKeys.Contains k))
     let ctrl = lazy (lCtrl.Value %|| rCtrl.Value)
 
     abstract member KeyDown : Keys -> unit
     abstract member KeyUp : Keys -> unit
     abstract member KeyPress : char -> unit
-
+    abstract member Reset : unit -> unit
 
     default x.KeyDown(k : Keys) =
         downWithRepeats.Emit k
@@ -58,27 +56,30 @@ type EventKeyboard() =
             downEvent.Emit k
 
             match downEvents.TryGetValue k with
-                | (true, e) -> e.Emit ()
-                | _ -> ()     
-                
+            | true, e -> e.Emit ()
+            | _ -> ()
+
             match isDown.TryGetValue k with
-                | (true, e) -> transact (fun () -> e.Value <- true)
-                | _ -> ()      
+            | true, e -> transact (fun () -> e.Value <- true)
+            | _ -> ()
 
     default x.KeyUp(k : Keys) =
         if downKeys.Remove k then
             upEvent.Emit k
 
             match upEvents.TryGetValue k with
-                | (true, e) -> e.Emit ()
-                | _ -> ()     
-                
+            | true, e -> e.Emit ()
+            | _ -> ()
+
             match isDown.TryGetValue k with
-                | (true, e) -> transact (fun () -> e.Value <- false)
-                | _ -> ()   
+            | true, e -> transact (fun () -> e.Value <- false)
+            | _ -> ()
 
     default x.KeyPress(c : char) =
         input.Emit c
+
+    default x.Reset() =
+        for c in downKeys do x.KeyUp c
 
     member x.IsDown (k : Keys) =
         let r = isDown.GetOrAdd(k, fun k -> AVal.init (downKeys.Contains k))
@@ -119,8 +120,7 @@ type EventKeyboard() =
         member x.DownWithRepeats = downWithRepeats :> IEvent<_>
         member x.Up = upEvent :> IEvent<_>
         member x.Press = input :> IEvent<_>
-        
+
         member x.ClaimsKeyEvents
             with get() = claimEvents
             and set v = claimEvents <- v
-

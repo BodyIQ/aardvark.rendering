@@ -1,8 +1,9 @@
 - [Application] Added support for up to 8 mouse buttons
-- [Application] Prevent consecutive double-click events from `EventMouse` to align behavior with Windows Forms.
+- [Application] Prevent consecutive double-click events from `EventMouse` to align behavior with Windows Forms
+- [Application.WinForms] Reset mouse and keyboard state on focus loss to prevent stuck keys and buttons
 
 ### 5.6.7
-- [Application.WinForms] Prevent PreviewKeyDown from sending KeyDown events for arrow keys
+- [Application.WinForms] Prevent `PreviewKeyDown` from sending `KeyDown` events for arrow keys
 
 ### 5.6.6
 - [GL] Added `Context.GetDebugMessages`

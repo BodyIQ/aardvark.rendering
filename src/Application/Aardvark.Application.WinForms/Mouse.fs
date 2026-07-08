@@ -55,6 +55,7 @@ type Mouse() as this =
                 PixelPosition(0,0,0,0)
 
 
+    let onLostFocusHandler = EventHandler(fun _ _ -> this.Reset())
     let onMouseDownHandler = MouseEventHandler(fun s e -> this.Down(%%e, %e.Button))
     let onMouseUpHandler = MouseEventHandler(fun s e -> this.Up (%%e, %e.Button))
     let onMouseMoveHandler = MouseEventHandler(fun s e -> this.Move %%e)
@@ -66,29 +67,31 @@ type Mouse() as this =
 
     let addHandlers() =
         match ctrl with
-            | Some ctrl ->
-                ctrl.MouseDown.AddHandler onMouseDownHandler
-                ctrl.MouseUp.AddHandler onMouseUpHandler
-                ctrl.MouseMove.AddHandler onMouseMoveHandler
-                ctrl.MouseWheel.AddHandler onMouseWheelHandler
-                ctrl.MouseEnter.AddHandler onMouseEnter
-                ctrl.MouseLeave.AddHandler onMouseLeave
-                ctrl.MouseClick.AddHandler onMouseClickHandler
-                ctrl.MouseDoubleClick.AddHandler onMouseDoubleClickHandler
-            | _ ->()
+        | Some ctrl ->
+            ctrl.LostFocus.AddHandler onLostFocusHandler
+            ctrl.MouseDown.AddHandler onMouseDownHandler
+            ctrl.MouseUp.AddHandler onMouseUpHandler
+            ctrl.MouseMove.AddHandler onMouseMoveHandler
+            ctrl.MouseWheel.AddHandler onMouseWheelHandler
+            ctrl.MouseEnter.AddHandler onMouseEnter
+            ctrl.MouseLeave.AddHandler onMouseLeave
+            ctrl.MouseClick.AddHandler onMouseClickHandler
+            ctrl.MouseDoubleClick.AddHandler onMouseDoubleClickHandler
+        | _ -> ()
 
     let removeHandlers() =
         match ctrl with
-            | Some ctrl ->
-                ctrl.MouseDown.RemoveHandler onMouseDownHandler
-                ctrl.MouseUp.RemoveHandler onMouseUpHandler
-                ctrl.MouseMove.RemoveHandler onMouseMoveHandler
-                ctrl.MouseWheel.RemoveHandler onMouseWheelHandler
-                ctrl.MouseEnter.RemoveHandler onMouseEnter
-                ctrl.MouseLeave.RemoveHandler onMouseLeave
-                ctrl.MouseClick.RemoveHandler onMouseClickHandler
-                ctrl.MouseDoubleClick.RemoveHandler onMouseDoubleClickHandler
-            | None -> ()
+        | Some ctrl ->
+            ctrl.LostFocus.RemoveHandler onLostFocusHandler
+            ctrl.MouseDown.RemoveHandler onMouseDownHandler
+            ctrl.MouseUp.RemoveHandler onMouseUpHandler
+            ctrl.MouseMove.RemoveHandler onMouseMoveHandler
+            ctrl.MouseWheel.RemoveHandler onMouseWheelHandler
+            ctrl.MouseEnter.RemoveHandler onMouseEnter
+            ctrl.MouseLeave.RemoveHandler onMouseLeave
+            ctrl.MouseClick.RemoveHandler onMouseClickHandler
+            ctrl.MouseDoubleClick.RemoveHandler onMouseDoubleClickHandler
+        | None -> ()
 
     member x.SetControl(c : Control) =
         removeHandlers()
