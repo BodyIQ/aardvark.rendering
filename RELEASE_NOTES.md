@@ -1,3 +1,4 @@
+### 5.6.8
 - [Application] Added support for up to 8 mouse buttons
 - [Application] Prevent consecutive double-click events from `EventMouse` to align behavior with Windows Forms
 - [Application.WinForms] Reset mouse and keyboard state on focus loss to prevent stuck keys and buttons
