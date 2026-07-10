@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+    <ExamplesMacTargetFramework Condition="'$(ExamplesMacTargetFramework)' == ''">net8.0</ExamplesMacTargetFramework>
+    <TargetFramework>$(ExamplesMacTargetFramework)</TargetFramework>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <OutputPath>..\..\..\bin\Debug</OutputPath>
@@ -23,4 +24,9 @@
     <ProjectReference Include="..\..\Application\Aardvark.Application.Slim\Aardvark.Application.Slim.fsproj" />
     <ProjectReference Include="..\..\Application\Aardvark.Application\Aardvark.Application.fsproj" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <AardvarkRenderingVulkanMacOSNativeBase>$(MSBuildProjectDirectory)/../../../lib/Native/Aardvark.Rendering.Vulkan/mac</AardvarkRenderingVulkanMacOSNativeBase>
+  </PropertyGroup>
+  <Import Project="..\..\Aardvark.Rendering.Vulkan\buildTransitive\Aardvark.Rendering.Vulkan.targets" />
 </Project>
