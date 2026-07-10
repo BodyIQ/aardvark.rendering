@@ -1,3 +1,6 @@
+### 5.6.9
+- [Vulkan] Bundle macOS Vulkan driver assets (KosmicKrisp on arm64, MoltenVK) and stage them into consuming builds via `buildTransitive`, so downstream apps get a self-contained Vulkan surface without a system SDK. Distinct fork version (upstream stops at 5.6.8) so consumers resolve the fork unambiguously from the BodyIQ feed.
+
 ### 5.6.8
 - [Application] Added support for up to 8 mouse buttons
 - [Application] Prevent consecutive double-click events from `EventMouse` to align behavior with Windows Forms
