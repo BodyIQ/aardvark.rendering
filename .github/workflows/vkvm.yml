@@ -9,7 +9,7 @@ on:
 jobs:
   windows-x64:
     name: Windows (x64)
-    runs-on: windows-2022
+    runs-on: blacksmith-4vcpu-windows-2025
     steps:  
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,7 +29,7 @@ jobs:
           path: lib/Native/Aardvark.Rendering.Vulkan/windows/AMD64/
   linux-x64:
     name: Linux (x64)
-    runs-on: ubuntu-22.04
+    runs-on: blacksmith-4vcpu-ubuntu-2204
     steps:  
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,7 +49,7 @@ jobs:
           path: lib/Native/Aardvark.Rendering.Vulkan/linux/AMD64/          
   macos-x64:
     name: MacOS (x64)
-    runs-on: macos-15-intel
+    runs-on: blacksmith-6vcpu-macos-15
     steps:  
       - name: Checkout
         uses: actions/checkout@v4
@@ -69,7 +69,7 @@ jobs:
           path: lib/Native/Aardvark.Rendering.Vulkan/mac/AMD64/
   macos-arm64:
     name: MacOS (ARM64)
-    runs-on: macos-14
+    runs-on: blacksmith-6vcpu-macos-15
     steps:  
       - name: Checkout
         uses: actions/checkout@v4
@@ -89,7 +89,7 @@ jobs:
           path: lib/Native/Aardvark.Rendering.Vulkan/mac/ARM64/          
   build:
     name: Build
-    runs-on: windows-latest
+    runs-on: blacksmith-4vcpu-windows-2025
     needs: 
       - windows-x64
       - linux-x64

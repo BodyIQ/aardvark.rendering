@@ -9,7 +9,7 @@ on:
 jobs:
   release-check:
     name: Check release version
-    runs-on: windows-latest
+    runs-on: blacksmith-4vcpu-windows-2025
     permissions:
       contents: read
     outputs:
@@ -90,7 +90,7 @@ jobs:
 
   pack:
     name: Package
-    runs-on: windows-latest
+    runs-on: blacksmith-4vcpu-windows-2025
     needs: release-check
     if: needs.release-check.outputs.should_publish == 'true'
     steps:
