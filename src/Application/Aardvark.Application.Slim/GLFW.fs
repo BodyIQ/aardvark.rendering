@@ -240,9 +240,11 @@ module MissingGlfwFunctions =
     type private GetWindowContentScaleDel = delegate of nativeptr<WindowHandle> * byref<float32> * byref<float32> -> unit
 
     type private GetKeyNameDel = delegate of Keys * int -> nativeint
+    type private InitVulkanLoaderDel = delegate of nativeint -> unit
 
     let private scaleDict = System.Collections.Concurrent.ConcurrentDictionary<Glfw, GetWindowContentScaleDel>()
     let private keyNameDict = System.Collections.Concurrent.ConcurrentDictionary<Glfw, GetKeyNameDel>()
+    let private initVulkanLoaderDict = System.Collections.Concurrent.ConcurrentDictionary<Glfw, InitVulkanLoaderDel option>()
 
     let private getWindowScale (glfw : Glfw) =
         scaleDict.GetOrAdd(glfw, fun glfw ->
@@ -255,7 +257,23 @@ module MissingGlfwFunctions =
             Marshal.GetDelegateForFunctionPointer(m, typeof<GetKeyNameDel>) |> unbox<GetKeyNameDel>
         )
 
+    let private getInitVulkanLoader (glfw : Glfw) =
+        initVulkanLoaderDict.GetOrAdd(glfw, fun glfw ->
+            let m = glfw.Context.GetProcAddress "glfwInitVulkanLoader"
+            if m = 0n then
+                None
+            else
+                Marshal.GetDelegateForFunctionPointer(m, typeof<InitVulkanLoaderDel>)
+                |> unbox<InitVulkanLoaderDel>
+                |> Some
+        )
+
     type Glfw with
+        member x.InitVulkanLoader(getInstanceProcAddress : nativeint) =
+            match getInitVulkanLoader x with
+            | Some init -> init.Invoke getInstanceProcAddress
+            | None -> ()
+
         member x.GetWindowContentScale(win : nativeptr<WindowHandle>, [<Out>] sx : byref<float32>, [<Out>] sy : byref<float32>) =
             getWindowScale(x).Invoke(win, &sx, &sy)
 
@@ -1706,4 +1724,4 @@ and Window(instance : Instance, win : nativeptr<WindowHandle>, title : string, e
         updateGamepads()
 
     member x.Run() =
-        instance.Run x          
+        instance.Run x
