@@ -93,6 +93,11 @@ jobs:
     runs-on: blacksmith-4vcpu-windows-2025
     needs: release-check
     if: needs.release-check.outputs.should_publish == 'true'
+    permissions:
+      contents: read
+      packages: write
+    env:
+      NUGET_KEY: ${{ secrets.NUGET_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -117,9 +122,8 @@ jobs:
         env:
           NUGET_KEY: ${{ secrets.GITHUB_TOKEN }}
         shell: cmd
-        run: dotnet nuget push "bin\pack\*.nupkg" -k %NUGET_KEY% -s "https://nuget.pkg.github.com/aardvark-platform/index.json" --skip-duplicate
+        run: dotnet nuget push "bin\pack\*.nupkg" -k %NUGET_KEY% -s "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" --skip-duplicate
       - name: NuGet
-        env:
-          NUGET_KEY: ${{ secrets.NUGET_KEY }}
+        if: ${{ env.NUGET_KEY != '' }}
         shell: cmd
         run: dotnet nuget push "bin\pack\*.nupkg" -k %NUGET_KEY% -s "https://api.nuget.org/v3/index.json" --skip-duplicate
