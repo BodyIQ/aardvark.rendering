@@ -15,6 +15,24 @@ open System.Runtime.InteropServices
 #nowarn "9"
 
 module private Vulkan =
+    type private GetInstanceProcAddrDel = delegate of nativeint * nativeptr<byte> -> nativeint
+
+    let private getInstanceProcAddr =
+        GetInstanceProcAddrDel(fun instance name ->
+            if name = NativePtr.zero then
+                0n
+            else
+                let name = Marshal.PtrToStringAnsi(NativePtr.toNativeInt name)
+                VkRaw.vkGetInstanceProcAddr(instance, name)
+        )
+
+    let private getInstanceProcAddrPtr =
+        Marshal.GetFunctionPointerForDelegate getInstanceProcAddr
+
+    let tryInitializeGlfwVulkanLoader (glfw : Glfw) =
+        if RuntimeInformation.IsOSPlatform OSPlatform.OSX then
+            glfw.InitVulkanLoader getInstanceProcAddrPtr
+
     let getSupportedSamples (runtime : Runtime) =
         let limits = runtime.Device.PhysicalDevice.Limits.Framebuffer
 
@@ -87,8 +105,8 @@ module private Vulkan =
 
     let interop =
         { new IWindowInterop with
-            override _.Boot(_) =
-                ()
+            override _.Boot(glfw) =
+                tryInitializeGlfwVulkanLoader glfw
 
             override _.CreateSurface(runtime : IRuntime, cfg: WindowConfig, glfw: Glfw, win: nativeptr<WindowHandle>) =
                 createSurface (runtime :?> _) cfg glfw win
