@@ -10,3 +10,9 @@ description
     Aardvark is an open-source platform for visual computing, real-time graphics and visualization.
 include-pdbs true
 include-referenced-projects true
+files
+    buildTransitive/Aardvark.Rendering.Vulkan.targets => buildTransitive
+    ../../lib/Native/Aardvark.Rendering.Vulkan/mac/AMD64/*.dylib => buildTransitive/native/mac/AMD64
+    ../../lib/Native/Aardvark.Rendering.Vulkan/mac/AMD64/lib/*.dylib => buildTransitive/native/mac/AMD64/lib
+    ../../lib/Native/Aardvark.Rendering.Vulkan/mac/ARM64/*.dylib => buildTransitive/native/mac/ARM64
+    ../../lib/Native/Aardvark.Rendering.Vulkan/mac/ARM64/lib/*.dylib => buildTransitive/native/mac/ARM64/lib

@@ -1,0 +1,43 @@
+<Project>
+  <Target Name="StageAardvarkRenderingVulkanMacOSNativeAssets"
+          AfterTargets="Build"
+          Condition="'$(AardvarkRenderingVulkanStageMacOSNativeAssets)' != 'false' and $([MSBuild]::IsOSPlatform('OSX'))">
+    <PropertyGroup>
+      <AardvarkRenderingVulkanMacOSRid Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)</AardvarkRenderingVulkanMacOSRid>
+      <AardvarkRenderingVulkanMacOSRid Condition="'$(AardvarkRenderingVulkanMacOSRid)' == ''">$(NETCoreSdkRuntimeIdentifier)</AardvarkRenderingVulkanMacOSRid>
+      <AardvarkRenderingVulkanMacOSArch Condition="'$(AardvarkRenderingVulkanMacOSRid)' == 'osx-arm64'">ARM64</AardvarkRenderingVulkanMacOSArch>
+      <AardvarkRenderingVulkanMacOSArch Condition="'$(AardvarkRenderingVulkanMacOSRid)' == 'osx-x64'">AMD64</AardvarkRenderingVulkanMacOSArch>
+      <AardvarkRenderingVulkanMacOSNativeBase Condition="'$(AardvarkRenderingVulkanMacOSNativeBase)' == ''">$(MSBuildThisFileDirectory)native/mac</AardvarkRenderingVulkanMacOSNativeBase>
+      <AardvarkRenderingVulkanMacOSNativeRoot>$(AardvarkRenderingVulkanMacOSNativeBase)/$(AardvarkRenderingVulkanMacOSArch)</AardvarkRenderingVulkanMacOSNativeRoot>
+      <AardvarkRenderingVulkanMacOSDriver Condition="'$(AardvarkRenderingVulkanMacOSDriver)' == '' and '$(AardvarkRenderingVulkanMacOSArch)' == 'ARM64'">KosmicKrisp</AardvarkRenderingVulkanMacOSDriver>
+      <AardvarkRenderingVulkanMacOSDriver Condition="'$(AardvarkRenderingVulkanMacOSDriver)' == ''">MoltenVK</AardvarkRenderingVulkanMacOSDriver>
+      <AardvarkRenderingVulkanMacOSDriverLibrary Condition="'$(AardvarkRenderingVulkanMacOSDriver)' == 'KosmicKrisp'">libvulkan_kosmickrisp.dylib</AardvarkRenderingVulkanMacOSDriverLibrary>
+      <AardvarkRenderingVulkanMacOSDriverLibrary Condition="'$(AardvarkRenderingVulkanMacOSDriver)' == 'MoltenVK'">libMoltenVK.dylib</AardvarkRenderingVulkanMacOSDriverLibrary>
+      <AardvarkRenderingVulkanMacOSDriverManifest Condition="'$(AardvarkRenderingVulkanMacOSDriver)' == 'KosmicKrisp'">libkosmickrisp_icd.json</AardvarkRenderingVulkanMacOSDriverManifest>
+      <AardvarkRenderingVulkanMacOSDriverManifest Condition="'$(AardvarkRenderingVulkanMacOSDriver)' == 'MoltenVK'">MoltenVK_icd.json</AardvarkRenderingVulkanMacOSDriverManifest>
+      <AardvarkRenderingVulkanMacOSDriverApiVersion Condition="'$(AardvarkRenderingVulkanMacOSDriver)' == 'KosmicKrisp'">1.3.0</AardvarkRenderingVulkanMacOSDriverApiVersion>
+      <AardvarkRenderingVulkanMacOSDriverApiVersion Condition="'$(AardvarkRenderingVulkanMacOSDriver)' == 'MoltenVK'">1.4.0</AardvarkRenderingVulkanMacOSDriverApiVersion>
+      <AardvarkRenderingVulkanMacOSDriverPortability Condition="'$(AardvarkRenderingVulkanMacOSDriver)' == 'MoltenVK'">, &quot;is_portability_driver&quot;: true</AardvarkRenderingVulkanMacOSDriverPortability>
+      <AardvarkRenderingVulkanMacOSDriverPath>$(TargetDir)lib/$(AardvarkRenderingVulkanMacOSDriverLibrary)</AardvarkRenderingVulkanMacOSDriverPath>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(AardvarkRenderingVulkanMacOSDriverLibrary)' != '' and Exists('$(AardvarkRenderingVulkanMacOSNativeRoot)')">
+      <AardvarkRenderingVulkanMacOSRootDylib Include="$(AardvarkRenderingVulkanMacOSNativeRoot)/*.dylib" />
+      <AardvarkRenderingVulkanMacOSDriverDylib Include="$(AardvarkRenderingVulkanMacOSNativeRoot)/lib/$(AardvarkRenderingVulkanMacOSDriverLibrary)" />
+      <AardvarkRenderingVulkanMacOSExistingManifest Include="$(TargetDir)vulkan/icd.d/*.json" />
+      <AardvarkRenderingVulkanMacOSExistingDriverDylib Include="$(TargetDir)lib/libMoltenVK.dylib;$(TargetDir)lib/libvulkan_kosmickrisp.dylib" />
+    </ItemGroup>
+
+    <MakeDir Directories="$(TargetDir)lib" Condition="'@(AardvarkRenderingVulkanMacOSDriverDylib)' != ''" />
+    <MakeDir Directories="$(TargetDir)vulkan/icd.d" Condition="'@(AardvarkRenderingVulkanMacOSDriverDylib)' != ''" />
+    <Delete Files="@(AardvarkRenderingVulkanMacOSExistingDriverDylib)" />
+    <Copy SourceFiles="@(AardvarkRenderingVulkanMacOSRootDylib)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(AardvarkRenderingVulkanMacOSDriverDylib)" DestinationFolder="$(TargetDir)lib" SkipUnchangedFiles="true" />
+    <Delete Files="@(AardvarkRenderingVulkanMacOSExistingManifest)" />
+    <WriteLinesToFile
+      File="$(TargetDir)vulkan/icd.d/$(AardvarkRenderingVulkanMacOSDriverManifest)"
+      Lines="{ &quot;file_format_version&quot;: &quot;1.0.0&quot;, &quot;ICD&quot;: { &quot;library_path&quot;: &quot;$(AardvarkRenderingVulkanMacOSDriverPath)&quot;, &quot;api_version&quot;: &quot;$(AardvarkRenderingVulkanMacOSDriverApiVersion)&quot;$(AardvarkRenderingVulkanMacOSDriverPortability) } }"
+      Overwrite="true"
+      Condition="'@(AardvarkRenderingVulkanMacOSDriverDylib)' != ''" />
+  </Target>
+</Project>

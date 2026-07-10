@@ -2,6 +2,7 @@
 
 open System
 open System.Collections.Generic
+open System.IO
 open System.Runtime.InteropServices
 open System.Threading
 open Microsoft.FSharp.NativeInterop
@@ -145,6 +146,33 @@ type Instance(apiVersion : Version, layers : string seq, extensions : string seq
     static let availableLayerNames = availableLayers |> Seq.map (fun l -> l.name.ToLower(), l) |> Map.ofSeq
     static let globalExtensionNames = globalExtensions |> Seq.map (fun p -> p.name.ToLower(), p.name) |> Map.ofSeq
 
+    static let supportsPortabilityEnumeration =
+        Map.containsKey (KHRPortabilityEnumeration.Name.ToLower()) globalExtensionNames
+
+    static let selectedDriverManifests =
+        let split (value : string) =
+            if String.IsNullOrWhiteSpace value then
+                []
+            else
+                value.Split([| Path.PathSeparator |], StringSplitOptions.RemoveEmptyEntries)
+                |> Array.toList
+
+        [
+            Environment.GetEnvironmentVariable "VK_DRIVER_FILES"
+            Environment.GetEnvironmentVariable "VK_ICD_FILENAMES"
+        ]
+        |> List.collect split
+
+    static let usesPortabilityDriver =
+        selectedDriverManifests
+        |> List.exists (fun path ->
+            try
+                File.Exists path &&
+                File.ReadAllText(path).IndexOf("is_portability_driver", StringComparison.OrdinalIgnoreCase) >= 0
+            with _ ->
+                false
+        )
+
     static let filterLayersAndExtensions (wantedLayers : list<string>) (wantedExtensions : list<string>) =
         let availableExtensions = Dictionary globalExtensionNames
 
@@ -184,6 +212,11 @@ type Instance(apiVersion : Version, layers : string seq, extensions : string seq
             List.ofSeq extensions @ [Instance.Extensions.Debug]
         else
             extensions |> List.ofSeq |> List.filter ((<>) Instance.Extensions.Debug)
+        |> fun extensions ->
+            if supportsPortabilityEnumeration && usesPortabilityDriver then
+                KHRPortabilityEnumeration.Name :: extensions
+            else
+                extensions
         |> List.distinct
 
     let layers =
@@ -196,6 +229,9 @@ type Instance(apiVersion : Version, layers : string seq, extensions : string seq
 
     let hasInstanceExtension name =
         instanceExtensions |> List.contains name
+
+    let portabilityEnumerationEnabled =
+        instanceExtensions |> List.contains KHRPortabilityEnumeration.Name
 
     let debugUtilsEnabled =
         instanceExtensions |> List.contains Instance.Extensions.Debug
@@ -250,10 +286,14 @@ type Instance(apiVersion : Version, layers : string seq, extensions : string seq
                     else
                         0n
 
+                let instanceCreateFlags =
+                    if portabilityEnumerationEnabled then enum<VkInstanceCreateFlags> 0x00000001
+                    else VkInstanceCreateFlags.None
+
                 let! pInfo =
                     VkInstanceCreateInfo(
                         pNext,
-                        VkInstanceCreateFlags.None,
+                        instanceCreateFlags,
                         pApplicationInfo,
                         uint32 layers.Length, pLayers,
                         uint32 extensions.Length, pExtensions

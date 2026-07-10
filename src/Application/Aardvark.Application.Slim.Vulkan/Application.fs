@@ -10,11 +10,44 @@ open Microsoft.FSharp.NativeInterop
 open Aardvark.Application
 open Aardvark.Glfw
 open System
+open System.IO
 open System.Runtime.InteropServices
 
 #nowarn "9"
 
 module private Vulkan =
+    [<DllImport("libc", EntryPoint = "setenv")>]
+    extern int private setenv(string name, string value, int overwrite)
+
+    let private hasDriverOverride () =
+        not (String.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable "VK_DRIVER_FILES")) ||
+        not (String.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable "VK_ICD_FILENAMES"))
+
+    let private setNativeEnvironmentVariable name value =
+        Environment.SetEnvironmentVariable(name, value)
+        setenv(name, value, 1) |> ignore
+
+    let private tryGetStagedDriverManifest () =
+        let directory = Path.Combine(AppContext.BaseDirectory, "vulkan", "icd.d")
+        if Directory.Exists directory then
+            match Directory.GetFiles(directory, "*.json") with
+            | [| manifest |] -> Some manifest
+            | [||] -> None
+            | manifests ->
+                Report.Warn("[Vulkan] Expected one bundled macOS Vulkan ICD manifest in {0}, found {1}", directory, manifests.Length)
+                None
+        else
+            None
+
+    let configureMacOSVulkanDriver () =
+        if RuntimeInformation.IsOSPlatform OSPlatform.OSX && not (hasDriverOverride()) then
+            match tryGetStagedDriverManifest () with
+            | Some manifest ->
+                setNativeEnvironmentVariable "VK_DRIVER_FILES" manifest
+                Report.Line(2, "[Vulkan] using bundled macOS Vulkan ICD: {0}", manifest)
+            | None ->
+                Report.Warn("[Vulkan] No bundled macOS Vulkan ICD manifest found in {0}", Path.Combine(AppContext.BaseDirectory, "vulkan", "icd.d"))
+
     type private GetInstanceProcAddrDel = delegate of nativeint * nativeptr<byte> -> nativeint
 
     let private getInstanceProcAddr =
@@ -31,6 +64,7 @@ module private Vulkan =
 
     let tryInitializeGlfwVulkanLoader (glfw : Glfw) =
         if RuntimeInformation.IsOSPlatform OSPlatform.OSX then
+            configureMacOSVulkanDriver()
             glfw.InitVulkanLoader getInstanceProcAddrPtr
 
     let getSupportedSamples (runtime : Runtime) =
@@ -122,6 +156,9 @@ type VulkanApplication private (app : HeadlessVulkanApplication, hideCocoaMenuBa
     inherit Application(app.Runtime, Vulkan.interop, hideCocoaMenuBar)
 
     static let surfaceExtensions =
+        lazy (
+        Vulkan.configureMacOSVulkanDriver()
+
         let all = Instance.GlobalExtensions
         all
         |> Array.choose (fun e ->
@@ -137,9 +174,10 @@ type VulkanApplication private (app : HeadlessVulkanApplication, hideCocoaMenuBa
         )
         |> Set.ofArray
         |> Set.add "VK_KHR_swapchain"
+        )
 
     static let getExtensions (user : string seq) =
-        let mutable r = surfaceExtensions
+        let mutable r = surfaceExtensions.Value
         if user <> null then
             for u in user do r <- Set.add u r
         r |> Set.toList
@@ -149,6 +187,7 @@ type VulkanApplication private (app : HeadlessVulkanApplication, hideCocoaMenuBa
         [<Optional; DefaultParameterValue(null : Func<DeviceFeatures, DeviceFeatures>)>] deviceFeatures: Func<DeviceFeatures, DeviceFeatures>,
         [<Optional; DefaultParameterValue(null : IDeviceChooser)>] deviceChooser: IDeviceChooser,
         [<Optional; DefaultParameterValue(false)>] hideCocoaMenuBar : bool) =
+        Vulkan.configureMacOSVulkanDriver()
         let app = new HeadlessVulkanApplication(debug, getExtensions extensions, (fun _ -> Seq.empty), deviceFeatures, deviceChooser)
         new VulkanApplication(app, hideCocoaMenuBar)
 
